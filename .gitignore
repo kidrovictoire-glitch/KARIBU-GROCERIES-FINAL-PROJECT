@@ -1,0 +1,10 @@
+.env
+node_modules/
+
+# Large local media files
+*.mp4
+*.mov
+
+
+# Logs
+npm-debug.log*
