@@ -1,7 +1,8 @@
 .env
-BACKEND/.env
+NEW/.env
 node_modules/
 BACKEND/node_modules/
+NEW/node_modules/
 FRONTEND/node_modules/
 
 # Large local media files

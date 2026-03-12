@@ -1,6 +1,6 @@
 # KGL Project (Backend)
 
-> Repo layout: backend lives in `BACKEND/`, frontend assets are in `FRONTEND/` (static site).
+> Repo layout: backend lives in `NEW/`, frontend assets are in `FRONTEND/` (static site).
 
 Karibu Groceries LTD management system built with Node.js, Express, MongoDB, and a role-based web UI.
 
@@ -54,7 +54,7 @@ It includes role-based workflows for:
 
 ## Getting Started (Backend)
 
-1. Install dependencies (from `BACKEND/`):
+1. Install dependencies (from `NEW/`):
 
 ```bash
 npm install
