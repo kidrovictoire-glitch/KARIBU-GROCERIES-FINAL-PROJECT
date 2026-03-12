@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KGL Reports | Export Center</title>
+  <script>
+    (function () {
+      function normalize(v) { return String(v || '').trim().toLowerCase(); }
+      function redirectLogin() { window.location.replace('index.html'); }
+      function validSession() {
+        const token = localStorage.getItem('token');
+        const role = normalize(localStorage.getItem('role'));
+        const accountRole = normalize(localStorage.getItem('accountRole'));
+        const branch = localStorage.getItem('branch');
+        if (!token) return false;
+        if (role !== 'director') return false;
+        if (accountRole && accountRole !== 'director') return false;
+        if (branch && branch !== 'All') return false;
+        return true;
+      }
+      if (!validSession()) redirectLogin();
+      window.history.pushState(null, '', window.location.href);
+      window.addEventListener('pageshow', function () {
+        if (!validSession()) redirectLogin();
+      });
+      window.addEventListener('popstate', function () {
+        if (!validSession()) redirectLogin();
+        window.history.pushState(null, '', window.location.href);
+      });
+      document.addEventListener('click', function (e) {
+        const link = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+        if (!link) return;
+        const href = link.getAttribute('href') || '';
+        if (!/^[^#].*\.html(?:[?#].*)?$/i.test(href)) return;
+        e.preventDefault();
+        window.location.replace(href);
+      });
+    })();
+  </script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="CSS/reports-page.css">
+</head>
+
+<body>
+  <div class="main-wrapper">
+    <main class="p-4 pt-2">
+      <div class="card branch-card p-4 mb-4">
+        <h5 class="fw-bold mb-3">Report Filters</h5>
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">Branch</label>
+            <select id="filterBranch" class="form-select">
+              <option value="All">All Branches</option>
+              <option value="Maganjo">Maganjo</option>
+              <option value="Matugga">Matugga</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Report Type</label>
+            <select id="filterType" class="form-select">
+              <option value="all">All Transactions</option>
+              <option value="cash">Cash Sales</option>
+              <option value="credit">Credit Sales</option>
+              <option value="procurement">Procurement</option>
+              <option value="inventory">Inventory Snapshot</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">From Date</label>
+            <input id="fromDate" type="date" class="form-control">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">To Date</label>
+            <input id="toDate" type="date" class="form-control">
+          </div>
+          <div class="col-md-2 d-grid align-items-end">
+            <button id="applyFiltersBtn" class="btn btn-success mt-4">Apply</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="revenue-grid mb-4">
+        <div class="period-card">
+          <div class="period-label">Cash Revenue</div>
+          <div id="sumCashRevenue" class="period-value">UGX 0</div>
+        </div>
+        <div class="period-card">
+          <div class="period-label">Credit Receivables</div>
+          <div id="sumCreditDue" class="period-value text-danger">UGX 0</div>
+        </div>
+        <div class="period-card">
+          <div class="period-label">Procurement Cost</div>
+          <div id="sumProcurementCost" class="period-value">UGX 0</div>
+        </div>
+        <div class="period-card">
+          <div class="period-label">Moved Tonnage</div>
+          <div id="sumTonnage" class="period-value text-primary">0 Kg</div>
+        </div>
+      </div>
+
+      <div class="card branch-card p-4">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3 no-print">
+          <h5 class="fw-bold m-0">Report Preview</h5>
+          <div class="d-flex gap-2">
+            <button id="refreshDataBtn" class="btn btn-outline-secondary btn-sm"><i
+                class="bi bi-arrow-clockwise me-1"></i> Sync Latest</button>
+            <button id="exportCsvBtn" class="btn btn-outline-success btn-sm"><i class="bi bi-filetype-csv me-1"></i>
+              Export CSV</button>
+            <button id="exportPdfBtn" class="btn btn-outline-primary btn-sm"><i class="bi bi-filetype-pdf me-1"></i>
+              Export PDF</button>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-striped align-middle">
+            <thead class="table-light">
+              <tr id="reportHeadRow"></tr>
+            </thead>
+            <tbody id="reportBody"></tbody>
+          </table>
+        </div>
+        <div id="reportEmpty" class="text-muted small hidden-section">No records for current filters.</div>
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pt-3 border-top mt-3">
+          <div id="reportShowing" class="text-muted small">Showing 0 results</div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="text-muted small">Per page</span>
+            <select id="reportPerPage" class="form-select form-select-sm w-auto">
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+          <div id="reportPagination" class="d-flex gap-2 flex-wrap"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/api-reports.js"></script>
+  <script src="js/reports.js"></script>
+</body>
+
+</html>

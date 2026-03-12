@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Director Dashboard | KGL Executive</title>
+  <script>
+    (function () {
+      function normalize(v) { return String(v || '').trim().toLowerCase(); }
+      function redirectLogin() { window.location.replace('index.html'); }
+      function validSession() {
+        const token = localStorage.getItem('token');
+        const role = normalize(localStorage.getItem('role'));
+        const accountRole = normalize(localStorage.getItem('accountRole'));
+        const branch = localStorage.getItem('branch');
+        if (!token) return false;
+        if (role !== 'director') return false;
+        if (accountRole && accountRole !== 'director') return false;
+        if (branch && branch !== 'All') return false;
+        return true;
+      }
+      if (!validSession()) redirectLogin();
+      window.history.pushState(null, '', window.location.href);
+      window.addEventListener('pageshow', function () {
+        if (!validSession()) redirectLogin();
+      });
+      window.addEventListener('popstate', function () {
+        if (!validSession()) redirectLogin();
+        window.history.pushState(null, '', window.location.href);
+      });
+      document.addEventListener('click', function (e) {
+        const link = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+        if (!link) return;
+        const href = link.getAttribute('href') || '';
+        if (!/^[^#].*\.html(?:[?#].*)?$/i.test(href)) return;
+        e.preventDefault();
+        window.location.replace(href);
+      });
+    })();
+  </script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="CSS/director.css">
+</head>
+
+<body>
+  <nav class="sidebar">
+    <div class="p-4 text-center">
+      <img src="Images/kgl-logo.jpg" alt="KGL logo" width="72" height="72" class="mb-2" style="object-fit:cover; border-radius:50%;">
+      <h3 class="fw-bold mb-0">KGL</h3>
+      <small class="text-success"><b>DIRECTOR PORTAL</b></small>
+      <hr class="bg-white opacity-25">
+    </div>
+    <ul class="nav flex-column">
+      <li class="nav-item"><a href="#" class="nav-link active w-100 text-start" data-section="agg-section"
+          onclick="showSection('agg-section'); return false;"><i class="bi bi-bar-chart-line me-2"></i> Global
+          Analytics</a></li>
+      <li class="nav-item"><a href="#" class="nav-link w-100 text-start" data-section="sales-section"
+          onclick="showSection('sales-section'); return false;"><i class="bi bi-bag me-2"></i> Sales</a></li>
+      <li class="nav-item"><a href="#" class="nav-link w-100 text-start" data-section="stock-section"
+          onclick="showSection('stock-section'); return false;"><i class="bi bi-box-seam me-2"></i> Stock
+          Aggregates</a></li>
+      <li class="nav-item"><a href="#" class="nav-link w-100 text-start" data-section="reports-section"
+          onclick="showSection('reports-section'); return false;"><i class="bi bi-file-earmark-bar-graph me-2"></i> Reports & Export</a></li>
+      <li class="nav-item"><a href="#" class="nav-link w-100 text-start" data-section="user-section"
+          onclick="showSection('user-section'); return false;"><i class="bi bi-people me-2"></i> User Management</a>
+      </li>
+    </ul>
+    <div class="logout-box">
+      <hr class="text-secondary">
+      <a href="#" onclick="logoutNow(); return false;" class="btn btn-sm w-100 logout-btn"><i
+          class="bi bi-box-arrow-right me-2"></i>Logout</a>
+    </div>
+  </nav>
+
+  <div class="main-wrapper">
+    <header class="p-3 bg-white border-bottom d-flex justify-content-between align-items-center">
+      <span id="breadcrumb" class="fw-medium text-muted">Director / <strong>Global Analytics</strong></span>
+      <span class="badge bg-success p-2 px-3 rounded-pill">Mr. Orban</span>
+    </header>
+
+    <main class="p-4">
+      <div id="sales-section" class="hidden-section">
+        <div class="d-flex flex-wrap justify-content-between align-items-center sales-toolbar mb-3">
+          <div>
+            <div class="text-muted small">Sales &gt; List</div>
+            <h3 class="fw-bold mb-0">Sales</h3>
+          </div>
+          <div class="d-flex gap-2">
+            <button id="directorExportSalesBtn" class="btn btn-outline-success"><i class="bi bi-download me-1"></i>Export Sales</button>
+          </div>
+        </div>
+
+        <div class="card sales-card mb-3">
+          <div class="card-body">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+              <button class="filter-pill" data-quick-filter="today">Today</button>
+              <button class="filter-pill" data-quick-filter="yesterday">Yesterday</button>
+              <button class="filter-pill" data-quick-filter="thisWeek">This Week</button>
+              <button class="filter-pill" data-quick-filter="lastWeek">Last Week</button>
+              <button class="filter-pill" data-quick-filter="thisMonth">This Month</button>
+              <button class="filter-pill" data-quick-filter="lastMonth">Last Month</button>
+              <button id="directorSalesReset" class="btn btn-link text-danger ms-auto">Reset</button>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-2">
+                <label class="form-label">Branch</label>
+                <select id="directorFilterBranch" class="form-select">
+                  <option value="All">All</option>
+                  <option value="Maganjo">Maganjo</option>
+                  <option value="Matugga">Matugga</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Payment Status</label>
+                <select id="directorFilterStatus" class="form-select">
+                  <option value="All">All</option>
+                  <option value="Paid">Paid</option>
+                  <option value="Pending">Pending</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Customer</label>
+                <select id="directorFilterCustomer" class="form-select">
+                  <option value="All">All</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Product</label>
+                <select id="directorFilterProduct" class="form-select">
+                  <option value="All">All</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">From</label>
+                <input id="directorFilterFrom" type="date" class="form-control">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">To</label>
+                <input id="directorFilterTo" type="date" class="form-control">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card sales-card">
+          <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+              <h6 class="fw-semibold mb-0">Sales list</h6>
+              <div class="sales-search">
+                <input id="directorSalesSearch" class="form-control" type="search" placeholder="Search sales...">
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table align-middle sales-table">
+                <thead class="table-light">
+                  <tr>
+                    <th scope="col"><input class="form-check-input" type="checkbox"></th>
+                    <th scope="col">Ref</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Branch</th>
+                    <th scope="col">Total</th>
+                    <th scope="col">Balance</th>
+                    <th scope="col">Payment</th>
+                    <th scope="col" class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="directorSalesBody"></tbody>
+              </table>
+            </div>
+
+            <div class="sales-summary-table mt-3">
+              <div class="summary-head d-flex justify-content-between px-3 py-2 text-muted fw-semibold">
+                <span>Summary</span>
+                <div class="d-flex gap-4">
+                  <span>Total</span>
+                  <span class="ms-4">Balance</span>
+                </div>
+              </div>
+              <div class="summary-row d-flex justify-content-between px-3 py-2">
+                <span>This page</span>
+                <div class="d-flex gap-4">
+                  <span id="directorPageRevenue">UGX 0</span>
+                  <span id="directorPageBalance" class="text-success">UGX 0</span>
+                </div>
+              </div>
+              <div class="summary-row d-flex justify-content-between px-3 py-2">
+                <span>All sales</span>
+                <div class="d-flex gap-4">
+                  <span id="directorAllRevenue">UGX 0</span>
+                  <span id="directorAllBalance" class="text-success">UGX 0</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pt-3 border-top mt-3">
+              <div id="directorSalesShowing" class="text-muted small">Showing 0 results</div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="text-muted small">Per page</span>
+                <select id="directorSalesPerPage" class="form-select form-select-sm w-auto">
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                </select>
+              </div>
+              <div id="directorSalesPagination" class="d-flex gap-2 flex-wrap"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="agg-section">
+        <h4 class="fw-bold mb-4" style="color: var(--kgl-green);">Consolidated Revenue Aggregations</h4>
+        <div class="card branch-card p-4 mb-4">
+          <h6 class="fw-bold border-bottom pb-2 mb-3 text-success">Business Overview</h6>
+          <p class="mb-0">
+            KGL deals in Beans, Grain Maize, Cow Peas, G-nuts, and Soybeans. Stock is procured from individual dealers,
+            company suppliers, and own farms at Maganjo and Matugga.
+          </p>
+        </div>
+        <div class="revenue-grid">
+          <div class="period-card">
+            <div class="period-label">Daily Sales</div>
+            <div class="period-value text-success" id="dailySales">UGX 0</div><small class="text-muted">Today's
+              Total</small>
+          </div>
+          <div class="period-card">
+            <div class="period-label">Weekly Sales</div>
+            <div class="period-value" id="weeklySales">UGX 0</div><small class="text-muted">Last 7 Days</small>
+          </div>
+          <div class="period-card">
+            <div class="period-label">Monthly Sales</div>
+            <div class="period-value" id="monthlySales">UGX 0</div><small class="text-muted">Current Month</small>
+          </div>
+          <div class="period-card" style="border-top-color: #0d6efd;">
+            <div class="period-label">Annual Sales</div>
+            <div class="period-value" id="annualSales">UGX 0</div><small class="text-muted">Year to Date</small>
+          </div>
+        </div>
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="card branch-card p-4">
+              <h6 class="fw-bold border-bottom pb-2 mb-3 text-success">Maganjo Branch Totals</h6>
+              <div class="d-flex justify-content-between mb-2"><span>Total Gross Revenue</span><span class="fw-bold"
+                  id="magRevenue">UGX 0</span></div>
+              <div class="d-flex justify-content-between"><span>Credit Receivables</span><span
+                  class="fw-bold text-danger" id="magCredit">UGX 0</span></div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card branch-card p-4">
+              <h6 class="fw-bold border-bottom pb-2 mb-3 text-success">Matugga Branch Totals</h6>
+              <div class="d-flex justify-content-between mb-2"><span>Total Gross Revenue</span><span class="fw-bold"
+                  id="matRevenue">UGX 0</span></div>
+              <div class="d-flex justify-content-between"><span>Credit Receivables</span><span
+                  class="fw-bold text-danger" id="matCredit">UGX 0</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="reports-section" class="hidden-section">
+        <div class="card sales-card">
+          <div class="card-body">
+            <iframe src="reports.html" class="reports-frame" title="Reports" loading="lazy"></iframe>
+          </div>
+        </div>
+      </div>
+
+      <div id="stock-section" class="hidden-section">
+        <h4 class="fw-bold mb-4" style="color: var(--kgl-green);">Stock Aggregates</h4>
+        <div class="revenue-grid">
+          <div class="period-card">
+            <div class="period-label">Total Stock Value</div>
+            <div class="period-value" id="totalStockValue">UGX 0</div><small class="text-muted">Across All
+              Branches</small>
+          </div>
+          <div class="period-card" style="border-top-color: #ffc107;">
+            <div class="period-label">Low Stock Items</div>
+            <div class="period-value text-warning" id="lowStockItems">0</div><small class="text-warning">Below 500
+              Kgs</small>
+          </div>
+          <div class="period-card" style="border-top-color: #dc3545;">
+            <div class="period-label">Out of Stock</div>
+            <div class="period-value text-danger" id="outStockItems">0</div><small class="text-danger">Needs
+              Refill</small>
+          </div>
+          <div class="period-card" style="border-top-color: #0d6efd;">
+            <div class="period-label">Tracked Products</div>
+            <div class="period-value text-primary" id="trackedProducts">0</div><small class="text-muted">KGL Product
+              Lines</small>
+          </div>
+        </div>
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="card branch-card p-4">
+              <h6 class="fw-bold border-bottom pb-2 mb-3 text-success">Maganjo Stock Totals</h6>
+              <div class="d-flex justify-content-between mb-2"><span>Stock Value</span><span class="fw-bold"
+                  id="magStockValue">UGX 0</span></div>
+              <div class="d-flex justify-content-between mb-2"><span>Available Units</span><span class="fw-bold"
+                  id="magUnits">0</span></div>
+              <div class="d-flex justify-content-between"><span>Low Stock Items</span><span class="fw-bold text-warning"
+                  id="magLow">0</span></div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card branch-card p-4">
+              <h6 class="fw-bold border-bottom pb-2 mb-3 text-success">Matugga Stock Totals</h6>
+              <div class="d-flex justify-content-between mb-2"><span>Stock Value</span><span class="fw-bold"
+                  id="matStockValue">UGX 0</span></div>
+              <div class="d-flex justify-content-between mb-2"><span>Available Units</span><span class="fw-bold"
+                  id="matUnits">0</span></div>
+              <div class="d-flex justify-content-between"><span>Low Stock Items</span><span class="fw-bold text-warning"
+                  id="matLow">0</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="user-section" class="hidden-section">
+        <div class="card branch-card p-4">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="fw-bold m-0">Staff Registry</h5>
+            <button id="openAddStaffBtn" class="add-btn-circle" data-bs-toggle="modal"
+              data-bs-target="#addUserModal">+</button>
+          </div>
+          <table class="table align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Branch</th>
+                <th>Password</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="staffRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header bg-success text-white">
+          <h5 id="staffModalTitle" class="modal-title fw-bold">Register New Staff</h5><button type="button"
+            class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="staffForm">
+          <input id="staffEditIndex" type="hidden" value="-1">
+          <div class="modal-body p-4">
+            <div class="row g-3">
+              <div class="col-md-12"><input id="staffName" type="text" class="form-control" placeholder="Full Name"
+                  minlength="2" required></div>
+              <div class="col-md-6"><select id="staffRole" class="form-select" required>
+                  <option value="Director">Director</option>
+                  <option value="Manager">Branch Manager</option>
+                  <option value="Agent">Sales Agent</option>
+                </select></div>
+              <div class="col-md-6"><select id="staffBranch" class="form-select" required>
+                  <option value="All">All</option>
+                  <option value="Maganjo">Maganjo</option>
+                  <option value="Matugga">Matugga</option>
+                </select></div>
+              <div class="col-md-12"><input id="staffPassword" type="text" class="form-control"
+                  placeholder="Password (min 4 characters)" minlength="4" required></div>
+            </div>
+          </div>
+          <div class="modal-footer border-0 p-4"><button id="staffSubmitBtn" type="submit"
+              class="btn btn-success w-100">Create Account</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/api-director.js"></script>
+  <script src="js/director.js"></script>
+</body>
+
+</html>

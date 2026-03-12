@@ -1,5 +1,8 @@
 .env
+BACKEND/.env
 node_modules/
+BACKEND/node_modules/
+FRONTEND/node_modules/
 
 # Large local media files
 *.mp4

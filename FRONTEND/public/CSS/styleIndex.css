@@ -1,0 +1,214 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f6fb;
+  padding: 18px;
+}
+
+.login-shell {
+  width: min(1100px, 100%);
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 22px 60px rgba(20, 40, 80, 0.18);
+  display: grid;
+  grid-template-columns: 1.08fr 1fr;
+  overflow: hidden;
+}
+
+.brand-panel {
+  background:
+    linear-gradient(135deg, rgba(15, 63, 120, 0.68), rgba(12, 47, 93, 0.62)),
+    url("../Images/login-bg.jpg") center / cover no-repeat;
+  color: #eaf1ff;
+  padding: 32px 34px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.brand-copy h1 {
+  font-size: clamp(2rem, 2.5vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+  margin-bottom: 10px;
+}
+
+.brand-copy .lead {
+  font-size: 0.96rem;
+  margin-bottom: 10px;
+  color: #dbe8ff;
+}
+
+.feature-list {
+  list-style: none;
+  display: grid;
+  gap: 10px;
+  color: #eaf1ff;
+  font-weight: 600;
+}
+
+.form-panel {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  padding: 26px 30px 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+}
+
+.login-card {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 18px 44px rgba(12, 60, 120, 0.12);
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+  max-width: 520px;
+  position: relative;
+}
+
+.login-logo {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 92px;
+  height: 92px;
+  border-radius: 16px;
+  object-fit: cover;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+}
+
+.login-card h2 {
+  font-size: 1.65rem;
+  color: #1f2a44;
+}
+
+.subhead {
+  color: #5f6e85;
+  margin-top: -6px;
+}
+
+label {
+  font-weight: 600;
+  color: #2f3a52;
+  display: grid;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+.required { color: #e63946; }
+
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #f4f7fb;
+  border: 1.6px solid #e0e6ef;
+  border-radius: 14px;
+  padding: 10px 12px 10px 42px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-wrap:focus-within {
+  border-color: #0f6ad8;
+  box-shadow: 0 10px 20px rgba(15, 106, 216, 0.16);
+}
+
+.input-wrap input {
+  border: none;
+  outline: none;
+  width: 100%;
+  background: transparent;
+  font-size: 0.96rem;
+  color: #1f2a44;
+}
+
+.input-icon {
+  position: absolute;
+  left: 14px;
+  font-size: 1.05rem;
+  color: #4f5d75;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #4f5d75;
+}
+
+.form-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.88rem;
+  color: #4f5d75;
+}
+
+.remember input { margin-right: 6px; accent-color: #0f6ad8; }
+.member-link { color: #0f6ad8; font-weight: 700; text-decoration: none; }
+.member-link:hover { text-decoration: underline; }
+
+.forgot-help {
+  background: #eef6ff;
+  border-left: 4px solid #0f6ad8;
+  color: #1f2a44;
+  font-size: 0.9rem;
+  padding: 12px 14px;
+  border-radius: 10px;
+  line-height: 1.5;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(90deg, #115dd8 0%, #0b428f 100%);
+  border: none;
+  border-radius: 14px;
+  color: #fff;
+  font-size: 0.98rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 16px 32px rgba(17, 93, 216, 0.25);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 36px rgba(17, 93, 216, 0.32);
+}
+
+.btn-primary:active { transform: translateY(0); }
+
+.footnote {
+  text-align: center;
+  color: #6b7c93;
+  font-size: 0.85rem;
+}
+
+.msg { font-weight: 700; margin-top: 6px; }
+
+@media (max-width: 1100px) {
+  .login-shell { grid-template-columns: 1fr; }
+  .brand-panel { order: 2; border-radius: 0 0 24px 24px; }
+  .form-panel { order: 1; }
+}
+
+@media (max-width: 640px) {
+  body { padding: 14px; }
+  .brand-tiles { grid-template-columns: 1fr; }
+  .brand-panel, .form-panel { padding: 26px 22px; }
+}

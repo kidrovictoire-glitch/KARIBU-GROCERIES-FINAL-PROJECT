@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KGL Manager Dashboard</title>
+  <script>
+    (function () {
+      function normalize(v) { return String(v || '').trim().toLowerCase(); }
+      function redirectLogin() { window.location.replace('index.html'); }
+      function validSession() {
+        const token = localStorage.getItem('token');
+        const role = normalize(localStorage.getItem('role'));
+        const accountRole = normalize(localStorage.getItem('accountRole'));
+        const branch = localStorage.getItem('branch');
+        if (!token) return false;
+        if (role !== 'manager') return false;
+        if (accountRole && accountRole !== 'manager') return false;
+        if (!branch || branch === 'All') return false;
+        return true;
+      }
+      if (!validSession()) redirectLogin();
+      window.history.pushState(null, '', window.location.href);
+      window.addEventListener('pageshow', function () {
+        if (!validSession()) redirectLogin();
+      });
+      window.addEventListener('popstate', function () {
+        if (!validSession()) redirectLogin();
+        window.history.pushState(null, '', window.location.href);
+      });
+      document.addEventListener('click', function (e) {
+        const link = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+        if (!link) return;
+        const href = link.getAttribute('href') || '';
+        if (!/^[^#].*\.html(?:[?#].*)?$/i.test(href)) return;
+        e.preventDefault();
+        window.location.replace(href);
+      });
+    })();
+  </script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="CSS/manager.css">
+</head>
+
+<body class="manager-body">
+  <div class="container-fluid p-0">
+    <div class="row g-0">
+      <nav class="sidebar">
+        <div class="px-4 mb-3 manager-brand">
+          <img src="Images/kgl-logo.jpg" alt="KGL logo" class="manager-logo">
+          <small class="text-success fw-semibold d-block">Karibu Groceries LTD</small>
+        </div>
+
+        <ul class="nav flex-column mt-2">
+          <li class="nav-item d-flex align-items-center justify-content-between">
+            <a class="nav-link flex-grow-1" id="nav-sales" onclick="showSection('sales-section')">Sales</a>
+            <span class="nav-pill ms-2" id="nav-sales-count">0</span>
+          </li>
+          <li class="nav-item"><a class="nav-link active" id="nav-home" onclick="showSection('home-section')">Home</a>
+          </li>
+          <li class="nav-item"><a class="nav-link" id="nav-account" onclick="showSection('account-section')">My
+              Account</a></li>
+          <li class="nav-item"><a class="nav-link" id="nav-prices" onclick="showSection('prices-section')">Prices</a>
+          </li>
+          <li class="nav-item"><a class="nav-link" id="nav-cash" onclick="showSection('cash-section')">Cash Sale</a>
+          </li>
+          <li class="nav-item"><a class="nav-link" id="nav-credit" onclick="showSection('credit-section')">Credit
+              Sale</a></li>
+          <li class="nav-item"><a class="nav-link" id="nav-procurement"
+              onclick="showSection('procurement-section')">Procurement</a></li>
+          <li class="nav-item"><a class="nav-link" id="nav-suppliers"
+              onclick="showSection('suppliers-section')">Suppliers</a></li>
+        </ul>
+
+        <div class="logout-box">
+          <hr class="text-secondary">
+          <a href="#" onclick="logoutNow(); return false;" class="btn btn-sm w-100 logout-btn"><i
+              class="bi bi-box-arrow-right me-2"></i>Logout</a>
+        </div>
+      </nav>
+
+      <!-- Dashboerd -->
+      <div class="col main-wrapper">
+        <header class="top-header">
+          <span class="breadcrumb-text" id="breadcrumb">Home / <strong>Dashboard</strong></span>
+          <div class="user-info"><span class="badge bg-light text-dark border p-2">Manager Account</span></div>
+        </header>
+
+        <!-- Branch Over view -->
+        <main class="main-content">
+          <div id="sales-section" class="hidden-section">
+            <div class="d-flex flex-wrap justify-content-between align-items-center sales-toolbar mb-3">
+              <div>
+                <div class="text-muted small">Sales &gt; List</div>
+                <h3 class="fw-bold mb-0">Sales</h3>
+              </div>
+              <div class="d-flex gap-2">
+                <button id="exportSalesBtn" class="btn btn-outline-success"><i class="bi bi-download me-1"></i>Export
+                  Sales</button>
+                <button id="newSaleBtn" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>New sale</button>
+              </div>
+            </div>
+
+            <div class="card sales-card mb-3">
+              <div class="card-body">
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                  <button class="filter-pill" data-quick-filter="today">Today</button>
+                  <button class="filter-pill" data-quick-filter="yesterday">Yesterday</button>
+                  <button class="filter-pill" data-quick-filter="thisWeek">This Week</button>
+                  <button class="filter-pill" data-quick-filter="lastWeek">Last Week</button>
+                  <button class="filter-pill" data-quick-filter="thisMonth">This Month</button>
+                  <button class="filter-pill" data-quick-filter="lastMonth">Last Month</button>
+                  <button id="salesFiltersReset" class="btn btn-link text-danger ms-auto">Reset</button>
+                </div>
+
+                <div class="row g-3">
+                  <div class="col-md-2">
+                    <label class="form-label">Branch</label>
+                    <select id="salesFilterBranch" class="form-select">
+                      <option value="All">All</option>
+                      <option value="Maganjo">Maganjo</option>
+                      <option value="Matugga">Matugga</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Payment Status</label>
+                    <select id="salesFilterStatus" class="form-select">
+                      <option value="All">All</option>
+                      <option value="Paid">Paid</option>
+                      <option value="Pending">Pending</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Customer</label>
+                    <select id="salesFilterCustomer" class="form-select">
+                      <option value="All">All</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Product</label>
+                    <select id="salesFilterProduct" class="form-select">
+                      <option value="All">All</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">From</label>
+                    <input id="salesFilterFrom" type="date" class="form-control">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">To</label>
+                    <input id="salesFilterTo" type="date" class="form-control">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card sales-card">
+              <div class="card-body">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                  <h6 class="fw-semibold mb-0">Sales list</h6>
+                  <div class="sales-search">
+                    <input id="salesSearch" class="form-control" type="search" placeholder="Search sales...">
+                  </div>
+                </div>
+                <div class="table-responsive">
+                  <table class="table align-middle sales-table">
+                    <thead class="table-light">
+                      <tr>
+                        <th scope="col"><input class="form-check-input" type="checkbox"></th>
+                        <th scope="col">Ref</th>
+                        <th scope="col">Date</th>
+                    <th scope="col">Branch</th>
+                    <th scope="col">Total</th>
+                    <th scope="col">Balance</th>
+                    <th scope="col">Payment</th>
+                    <th scope="col" class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="salesTableBody"></tbody>
+              </table>
+            </div>
+
+                <div class="sales-summary-table mt-3">
+                  <div class="summary-head d-flex justify-content-between px-3 py-2 text-muted fw-semibold">
+                    <span>Summary</span>
+                    <div class="d-flex gap-4">
+                      <span>Total</span>
+                      <span class="ms-4">Balance</span>
+                    </div>
+                  </div>
+                  <div class="summary-row d-flex justify-content-between px-3 py-2">
+                    <span>This page</span>
+                    <div class="d-flex gap-4">
+                      <span id="salesPageRevenue">UGX 0</span>
+                      <span id="salesPageBalance" class="text-success">UGX 0</span>
+                    </div>
+                  </div>
+                  <div class="summary-row d-flex justify-content-between px-3 py-2">
+                    <span>All sales</span>
+                    <div class="d-flex gap-4">
+                      <span id="salesAllRevenue">UGX 0</span>
+                      <span id="salesAllBalance" class="text-success">UGX 0</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pt-3 border-top mt-3">
+                  <div id="salesShowing" class="text-muted small">Showing 0 results</div>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted small">Per page</span>
+                    <select id="salesPerPage" class="form-select form-select-sm w-auto">
+                      <option value="10">10</option>
+                      <option value="20">20</option>
+                      <option value="50">50</option>
+                    </select>
+                  </div>
+                  <div id="salesPagination" class="d-flex gap-2 flex-wrap"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="home-section">
+            <h3 class="text-primary fw-bold mb-4">Branch Overview</h3>
+            <div class="row g-4">
+              <div class="col-md-3">
+                <div class="card border-0 shadow-sm p-3">
+                  <h6 class="text-muted">Total Stock (Visible Branches)</h6>
+                  <h2 class="fw-bold" id="homeTotalStock">0 Kg</h2>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card border-0 shadow-sm p-3">
+                  <h6 class="text-muted">Active Credit Sales</h6>
+                  <h2 class="fw-bold text-danger" id="homeCreditCount">0 Records</h2>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card border-0 shadow-sm p-3">
+                  <h6 class="text-muted">Out Of Stock Alerts</h6>
+                  <h2 class="fw-bold text-danger" id="homeOutOfStock">0 Items</h2>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card border-0 shadow-sm p-3">
+                  <h6 class="text-muted">Low Stock Alerts (&lt; 500 Kg)</h6>
+                  <h2 class="fw-bold text-warning" id="homeLowStock">0 Items</h2>
+                </div>
+              </div>
+            </div>
+            <div class="row g-4 mt-3" id="stockAlertsPanel">
+              <div class="col-12">
+                <div class="card border-0 shadow-sm p-3 h-100">
+                  <h6 class="text-muted">Out Stock Item Types (0 Kg)</h6>
+                  <ul class="list-group list-group-flush" id="homeOutStockList">
+                    <li class="list-group-item text-danger">No out of stock items.</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="col-lg-6">
+                <div class="card border-0 shadow-sm p-3 h-100">
+                  <h6 class="text-muted">Low Stock Items (&lt; 500 Kg)</h6>
+                  <ul class="list-group list-group-flush" id="homeLowStockList">
+                    <li class="list-group-item text-muted">No low stock items.</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="col-lg-6">
+                <div class="card border-0 shadow-sm p-3 h-100">
+                  <h6 class="text-muted">Over Stock Items (&gt; 500 Kg)</h6>
+                  <h2 class="fw-bold text-success mb-3" id="homeOverStock">0 Items</h2>
+                  <ul class="list-group list-group-flush" id="homeOverStockList">
+                    <li class="list-group-item text-muted">No over stock items.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- My Account -->
+          <div id="account-section" class="hidden-section">
+            <h3 class="text-center text-primary mb-4 fw-bold">My Account</h3>
+            <form id="managerAccountForm" class="form-container">
+              <div class="section-title">Request Login Detail Changes (Director Approval Required)</div>
+              <div class="row">
+                <div id="managerAccountMsg" class="msg"></div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Account Name</label>
+                  <input id="managerAccountName" type="text" class="form-control" minlength="2" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Branch</label>
+                  <input id="managerAccountBranch" type="text" class="form-control bg-light" readonly>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">New Password (optional)</label>
+                  <input id="managerAccountPassword" type="password" class="form-control" minlength="4"
+                    placeholder="Leave blank to keep current password">
+                  <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" id="toggleManagerPassword">
+                    <label class="form-check-label" for="toggleManagerPassword">Show Password</label>
+                  </div>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary px-5 mt-2">Save Account Changes</button>
+            </form>
+          </div>
+
+          <!-- Salling entry -->
+          <div id="cash-section" class="hidden-section">
+            <h3 class="text-center text-primary mb-4 fw-bold">Produce Selling Entry</h3>
+            <form id="managerCashForm" class="form-container">
+              <div class="section-title">Cash Sale Transaction Details</div>
+              <div class="row">
+                <div id="managerCashMsg" class="msg"></div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label">Branch</label>
+                  <select id="managerCashBranch" class="form-select" required>
+                    <option value="Maganjo">Maganjo</option>
+                    <option value="Matugga">Matugga</option>
+                  </select>
+                </div>
+
+                <!-- Produce Name -->
+                <div class="col-md-4 mb-3">
+                  <label class="form-label">Produce Name</label>
+                  <select id="managerCashProduce" class="form-select" required></select>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label">Type of Produce</label>
+                  <select id="managerCashType" class="form-select" required disabled>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label">Tonnage (Kgs)</label>
+                  <input id="managerCashTonnage" type="number" class="form-control" min="100" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label">Price Per Kg (UgX)</label>
+                  <input id="managerCashUnitPrice" type="number" class="form-control bg-light" readonly>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label">Amount Paid (UgX)</label>
+                  <input id="managerCashAmount" type="number" class="form-control" min="10000" required>
+                  <div id="managerCashAmountHint" class="form-text"></div>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label">Buyer's Name</label>
+                  <input id="managerCashBuyer" type="text" class="form-control" minlength="2" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label">Sales Agent Name</label>
+                  <input id="managerCashAgent" type="text" class="form-control" minlength="2" required>
+                </div>
+                <div class="col-md-2 mb-3">
+                  <label class="form-label">Date</label>
+                  <input id="managerCashDate" type="date" class="form-control" required>
+                </div>
+                <div class="col-md-2 mb-3">
+                  <label class="form-label">Time</label>
+                  <input id="managerCashTime" type="time" class="form-control" required>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary px-5 mt-2">Confirm Cash Sale</button>
+            </form>
+            <div class="form-container">
+              <div class="section-title">Cash Sales Records</div>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Produce</th>
+                      <th>Tonnage</th>
+                      <th>Amount</th>
+                      <th>Buyer</th>
+                      <th>Date</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="managerCashRows"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div id="credit-section" class="hidden-section">
+            <h3 class="text-center text-primary mb-4 fw-bold">Credit/Deferred Payment Registry</h3>
+            <form id="creditFormManager" class="form-container">
+              <div class="section-title">Buyer and Credit Information</div>
+              <div class="row">
+                <div id="creditMgrMsg" class="msg"></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Buyer Name</label><input id="creditBuyer"
+                    type="text" class="form-control" minlength="2" required></div>
+                <div class="col-md-4 mb-3"><label class="form-label">National ID (NIN)</label><input id="creditNIN"
+                    type="text" class="form-control" required></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Location</label><input id="creditLocation"
+                    type="text" class="form-control" minlength="2" required></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Contact (Phone)</label><input id="creditContact"
+                    type="tel" class="form-control" required></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Amount Due (UgX)</label><input id="creditAmountDue"
+                    type="number" class="form-control" min="10000" required></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Due Date</label><input id="creditDueDate"
+                    type="date" class="form-control" required></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Branch</label><select id="creditBranch"
+                    class="form-select" required>
+                    <option value="Maganjo">Maganjo</option>
+                    <option value="Matugga">Matugga</option>
+                  </select></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Produce Name</label><select id="creditProduceName"
+                    class="form-select" required></select></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Type of Produce</label><select
+                    id="creditProduceType" class="form-select" required disabled></select></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Tonnage (Kgs)</label><input id="creditTonnage"
+                    type="number" class="form-control" min="100" required></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Sales Agent Name</label><input id="creditAgentName"
+                    type="text" class="form-control" minlength="2" required></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Dispatch Date</label><input id="creditDispatch"
+                    type="date" class="form-control" required></div>
+              </div>
+              <button type="submit" class="btn btn-warning px-5 mt-2">Log Credit Sale</button>
+            </form>
+            <div class="form-container">
+              <div class="section-title">Credit Sales Records</div>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Buyer</th>
+                      <th>Produce</th>
+                      <th>Amount Due</th>
+                      <th>Due Date</th>
+                      <th>Dispatch</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="managerCreditRows"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+            <!-- procurement -->
+          <div id="procurement-section" class="hidden-section">
+            <h3 class="text-center text-primary mb-4 fw-bold">Produce Procurement Portal</h3>
+            <form id="procurementForm" class="form-container">
+              <div class="section-title">Record New Produce Intake</div>
+              <div class="row">
+                <div id="procureMsg" class="msg"></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Produce Name</label><select id="procureName"
+                    class="form-select" required></select></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Type of Produce</label><select id="procureType"
+                    class="form-select" required disabled></select></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Source Type</label><select id="procureSourceType"
+                    class="form-select" required>
+                    <option value="Individual Dealer">Individual Dealer</option>
+                    <option value="Company Supplier">Company Supplier</option>
+                    <option value="Own Farm">Own Farm</option>
+                  </select></div>
+                <div class="col-md-3 mb-3"><label class="form-label">Date</label><input id="procureDate" type="date"
+                    class="form-control" required></div>
+                <div class="col-md-3 mb-3"><label class="form-label">Time</label><input id="procureTime" type="time"
+                    class="form-control" required></div>
+                <div class="col-md-3 mb-3"><label class="form-label">Tonnage (Kgs)</label><input id="procureTonnage"
+                    type="number" class="form-control" min="1000" required></div>
+                <div class="col-md-3 mb-3"><label class="form-label">Cost in UgX</label><input id="procureCost"
+                    type="number" class="form-control" min="10000" required></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Selling Price (UgX/Kg)</label><input
+                    id="procureSellPrice" type="number" class="form-control" min="100" required></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Branch</label><select id="procureBranch"
+                    class="form-select" required>
+                    <option value="Maganjo">Maganjo</option>
+                    <option value="Matugga">Matugga</option>
+                  </select></div>
+                <div class="col-md-4 mb-3"><label class="form-label">Dealer Name</label><input id="procureDealer"
+                    type="text" class="form-control" minlength="2" required></div>
+                <div class="col-md-6 mb-3"><label class="form-label">Dealer Contact</label><input id="procureContact"
+                    type="tel" class="form-control" required></div>
+              </div>
+              <button type="submit" class="btn btn-success px-5 mt-2">Submit Procurement Entry</button>
+            </form>
+            <div class="form-container">
+              <div class="section-title">Procurement Records</div>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Produce</th>
+                      <th>Tonnage</th>
+                      <th>Cost</th>
+                      <th>Dealer</th>
+                      <th>Date</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="managerProcurementRows"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- supplier -->
+          <div id="suppliers-section" class="hidden-section">
+            <h3 class="text-center text-primary mb-4 fw-bold">Supplier Management</h3>
+            <div class="form-container">
+              <div class="section-title">Add Supplier</div>
+              <form id="supplierForm" class="row g-3 mb-3">
+                <div id="supplierMsg" class="msg"></div>
+                <div class="col-md-3">
+                  <label class="form-label">Source Type</label>
+                  <select id="supplierSourceType" class="form-select" required>
+                    <option value="Internal Farm">Internal Farm</option>
+                    <option value="Company Supplier">Company Supplier</option>
+                    <option value="Individual Dealer">Individual Dealer</option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Entity Name</label>
+                  <input id="supplierEntityName" type="text" class="form-control" minlength="2" required>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Location/Branch</label>
+                  <input id="supplierLocation" type="text" class="form-control" minlength="2" required>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Produce Provided</label>
+                  <input id="supplierProduce" type="text" class="form-control" minlength="2" required>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Phone Number</label>
+                  <input id="supplierContact" type="tel" class="form-control" required>
+                </div>
+                <div class="col-12">
+                  <button type="submit" class="btn btn-primary px-4">Add Supplier</button>
+                </div>
+              </form>
+
+              <!-- Stock Source -->
+              <div class="section-title">Stock Sources</div>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Source Type</th>
+                      <th>Entity Name</th>
+                      <th>Location/Branch</th>
+                      <th>Produce Provided</th>
+                      <th>Phone Number</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="supplierRows"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div id="prices-section" class="hidden-section">
+            <h3 class="text-center text-primary mb-4 fw-bold">Price Management</h3>
+            <div class="form-container">
+              <div class="section-title">Unit Prices (UGX per Kg)</div>
+              <div id="pricesList" class="row"></div>
+              <button id="savePricesBtn" class="btn btn-success">Save Prices</button>
+              <div id="pricesMsg" class="msg mt-2"></div>
+            </div>
+            <h3 class="text-center text-primary mb-3 fw-bold">Inventory Snapshot</h3>
+            <div class="form-container">
+              <div id="inventoryTable" class="table-responsive"></div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/api-manager.js"></script>
+  <script src="js/manager.js"></script>
+</body>
+
+</html>
