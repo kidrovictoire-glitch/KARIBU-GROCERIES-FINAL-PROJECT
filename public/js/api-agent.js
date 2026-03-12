@@ -1,5 +1,6 @@
 (function () {
-  const API_BASE = "";
+  // Allow overriding API base when frontend is hosted separately (e.g., Vercel).
+  const API_BASE = window.API_BASE || "";
 
   function token() {
     return localStorage.getItem("token") || "";
